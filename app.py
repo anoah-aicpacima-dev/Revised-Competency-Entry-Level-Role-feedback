@@ -45,7 +45,7 @@ if progress < total:
             "Agree": agree,
             "Revised Human Capability": revised
         })
-        st.experimental_rerun()
+        st.rerun()
 
 else:
     st.success("🎉 All tasks reviewed — thank you for your insights!")
