@@ -1,8 +1,28 @@
+
 import streamlit as st
 import pandas as pd
 import os
 
+# --- BASIC PASSWORD PROTECTION ---
 st.set_page_config(layout="wide")
+st.title("🔐 Secure Feedback Dashboard")
+
+# Simple shared password (you can change this)
+PASSWORD = "CGMA2025"
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    password_input = st.text_input("Enter dashboard password:", type="password")
+    if password_input == PASSWORD:
+        st.session_state.authenticated = True
+        st.experimental_rerun()
+    elif password_input != "":
+        st.error("Incorrect password. Please try again.")
+    st.stop()
+
+# --- DASHBOARD CONTENT (ONLY SHOWN IF AUTHENTICATED) ---
 st.title("📊 Feedback Dashboard: AI-Accelerated Finance & Accounting Tasks")
 
 # Load CSV file
