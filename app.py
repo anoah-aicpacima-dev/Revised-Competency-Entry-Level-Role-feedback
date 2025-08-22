@@ -1,7 +1,11 @@
 
 import streamlit as st
 import pandas as pd
-import os
+from PIL import Image
+
+# Load logo
+logo = Image.open("cgma-chartered-global-management-accountant-seeklogo.svg")
+st.image(logo, width=150)
 
 # Load the Excel file
 FILE_NAME = "3 column ai_accelerated_accounting_skills Ops level blueprint.xlsx"
@@ -11,7 +15,7 @@ df = pd.read_excel(FILE_NAME)
 if "responses" not in st.session_state:
     st.session_state.responses = []
 
-# App title
+# App title and instructions
 st.title("AI-Accelerated Finance & Accounting Skills Feedback")
 st.markdown("Review each AI-supported task and the associated human capability statement. Let us know if you agree or suggest a revision.")
 
