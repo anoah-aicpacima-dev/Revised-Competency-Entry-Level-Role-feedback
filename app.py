@@ -15,13 +15,17 @@ df = pd.read_excel(FILE_NAME)
 if "responses" not in st.session_state:
     st.session_state.responses = []
 
+if "user_info" not in st.session_state:
+    st.session_state.user_info = {"Name": "", "Email": ""}
+
 # App title and instructions
 st.title("AI-Accelerated Finance & Accounting Skills Feedback")
 st.markdown("Review each AI-supported task and the associated human capability statement. Let us know if you agree or suggest a revision.")
 
-# Progress bar
+# Progress bar and counter
 total = len(df)
 progress = len(st.session_state.responses)
+st.markdown(f"**Progress: Task {progress + 1} of {total}**")
 st.progress(progress / total)
 
 # Display current task
@@ -52,8 +56,19 @@ if progress < total:
         st.rerun()
 
 else:
-    st.success("🎉 All tasks reviewed — thank you for your insights!")
+    st.success("🎉 You’ve completed all tasks — thank you for your insights!")
+    st.markdown("Before downloading your results, please provide your name and email (optional):")
+
+    name = st.text_input("Name (optional)", key="name")
+    email = st.text_input("Email (optional)", key="email")
+
+    st.session_state.user_info["Name"] = name
+    st.session_state.user_info["Email"] = email
+
+    # Combine feedback with user info
     result_df = pd.DataFrame(st.session_state.responses)
+    result_df["Name"] = st.session_state.user_info["Name"]
+    result_df["Email"] = st.session_state.user_info["Email"]
 
     csv_filename = "ai_feedback_collected.csv"
     result_df.to_csv(csv_filename, index=False)
