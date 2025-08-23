@@ -1,26 +1,82 @@
-# app.py — Feedback collector for AI-Accelerated Finance & Accounting Skills
-# Place this file in the same repo folder as:
-#   - "3 column ai_accelerated_accounting_skills Ops level blueprint.xlsx"
-#   - "cgmacirclelogo.jpeg"
+# app.py — Feedback collector (styled with reliable logo handling)
+# Keep these files next to app.py:
+#  - "3 column ai_accelerated_accounting_skills Ops level blueprint.xlsx"
+#  - "cgmacirclelogo.jpeg"   <-- your logo file
 
 import streamlit as st
 import pandas as pd
 from pathlib import Path
 
-st.set_page_config(page_title="AI-Accelerated Finance & Accounting Skills Feedback", page_icon="🗳️", layout="centered")
+st.set_page_config(page_title="AI-Accelerated Finance & Accounting Skills", page_icon="🗳️", layout="centered")
 
-# ---------- CONFIG ----------
+# ---------------- CONFIG ----------------
 EXCEL_FILE = "3 column ai_accelerated_accounting_skills Ops level blueprint.xlsx"
 CSV_OUT    = "ai_feedback_collected.csv"
-LOGO_FILE  = "cgmacirclelogo.jpeg"  # <- ensure this exact file name exists next to app.py
-PROGRESS_BAR_HEIGHT = 20
+LOGO_FILE  = "cgmacirclelogo.jpeg"     # <- exact file name of your logo
+# ----------------------------------------
+
+# ---------- GLOBAL STYLES (CSS) ----------
+st.markdown("""
+<style>
+html, body, [class*="css"]  { font-size: 18px; }
+
+.block-container {
+  padding-top: 1.2rem;
+  padding-bottom: 2.5rem;
+  max-width: 900px;
+}
+
+h1, h2, h3 { font-weight: 800 !important; }
+h1 { font-size: 2.1rem !important; margin: 0.2rem 0 0.9rem 0 !important; }
+h2 { font-size: 1.35rem !important; margin: 0.2rem 0 0.35rem 0 !important; }
+h3 { font-size: 1.1rem !important; margin: 0.1rem 0 0.25rem 0 !important; }
+
+.section-label {
+  font-weight: 700; letter-spacing: 0.15px;
+  margin: 0.25rem 0 0.35rem 0;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+}
+
+.hr {
+  height: 1px;
+  background: linear-gradient(to right, rgba(0,0,0,0.06), rgba(0,0,0,0.02));
+  border: none;
+  margin: 14px 0;
+}
+
+.progress-text {
+  font-size: 0.95rem; font-weight: 700; opacity: 0.88;
+  margin-bottom: 0.35rem;
+}
+
+.stRadio > label, .stRadio div[role="radiogroup"] label { font-size: 1rem !important; }
+textarea { font-size: 1rem !important; }
+
+div.stButton > button:first-child {
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+  color: white; border: none;
+  padding: 0.65rem 1.1rem;
+  font-weight: 700;
+  border-radius: 12px;
+}
+div.stButton > button:first-child:hover { filter: brightness(0.95); }
+
+.caption { font-size: 0.95rem; opacity: 0.8; margin-top: 0.2rem; }
+</style>
+""", unsafe_allow_html=True)
 
 # ---------- HEADER ----------
-logo_path = Path(LOGO_FILE)
-if logo_path.exists():
-    st.image(str(logo_path), width=180)
+if Path(LOGO_FILE).exists():
+    st.image(LOGO_FILE, width=180)
 else:
-    st.warning(f"Logo not found: {LOGO_FILE}. (Upload it next to app.py)")
+    st.warning(f"⚠️ Logo file not found: {LOGO_FILE}. Upload it next to app.py.")
 
 st.title("AI-Accelerated Finance & Accounting Skills — Feedback")
 st.markdown(
@@ -30,13 +86,12 @@ st.markdown(
 )
 
 # ---------- LOAD DATA ----------
-xlsx_path = Path(EXCEL_FILE)
-if not xlsx_path.exists():
+if not Path(EXCEL_FILE).exists():
     st.error(f"Could not find the Excel file: **{EXCEL_FILE}**. Upload it next to `app.py` and rerun.")
     st.stop()
 
 try:
-    df = pd.read_excel(xlsx_path)
+    df = pd.read_excel(EXCEL_FILE)
 except Exception as e:
     st.error(f"Failed to read Excel file `{EXCEL_FILE}`: {e}")
     st.stop()
@@ -47,10 +102,9 @@ if missing:
     st.error(f"Your Excel is missing required columns: {missing}\n\nFound columns: {list(df.columns)}")
     st.stop()
 
-# ---------- SESSION STATE ----------
+# ---------- SESSION ----------
 if "responses" not in st.session_state:
-    st.session_state.responses = []  # list of dict rows
-
+    st.session_state.responses = []
 if "user_info" not in st.session_state:
     st.session_state.user_info = {"Name": "", "Email": ""}
 
@@ -59,37 +113,39 @@ total = len(df)
 progress_count = len(st.session_state.responses)
 progress_ratio = 0.0 if total == 0 else progress_count / total
 
-st.markdown(f"**Progress: Task {min(progress_count + 1, total)} of {total}**")
+st.markdown(f'<div class="progress-text">Progress: Task {min(progress_count + 1, total)} of {total}</div>', unsafe_allow_html=True)
 st.progress(progress_ratio)
 
-# ---------- MAIN FLOW ----------
+# ---------- MAIN ----------
 if progress_count < total:
     row = df.iloc[progress_count]
 
-    st.markdown("---")
-    st.subheader(f"🧾 Skill")
-    st.write(row["Skill"])
+    st.markdown('<div class="card">', unsafe_allow_html=True)
 
-    st.markdown("**🤖 AI/GenAI Supports**")
-    st.write(row["How AI/GenAI Supports"])
+    st.markdown("### 🧾 Skill")
+    st.markdown(f"{row['Skill']}")
 
-    st.markdown("**👤 Proposed Human Capability**")
-    st.write(row["The New Human Capability Statement"])
+    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
-    agree = st.radio(
-        "Do you agree with the Human Capability Statement?",
-        ["Yes", "No"],
-        key=f"agree_{progress_count}"
-    )
+    st.markdown('<div class="section-label">🤖 AI/GenAI Supports</div>', unsafe_allow_html=True)
+    st.markdown(f"{row['How AI/GenAI Supports']}")
 
+    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-label">👤 Proposed Human Capability</div>', unsafe_allow_html=True)
+    st.markdown(f"{row['The New Human Capability Statement']}")
+
+    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-label">Do you agree with the Human Capability Statement?</div>', unsafe_allow_html=True)
+    agree = st.radio("", ["Yes", "No"], horizontal=True, key=f"agree_{progress_count}")
+
+    revised = ""
     if agree == "No":
-        revised = st.text_area(
-            "💬 Suggest your revised Human Capability Statement:",
-            value="",
-            key=f"revise_{progress_count}"
-        )
-    else:
-        revised = ""  # keep blank to clearly separate from the original
+        st.markdown('<div class="section-label">💬 Suggest your revised statement</div>', unsafe_allow_html=True)
+        revised = st.text_area("", placeholder="Type your improved Human Capability statement here…", key=f"revise_{progress_count}")
+
+    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
 
     if st.button("✅ Submit Feedback", type="primary"):
         st.session_state.responses.append({
@@ -97,15 +153,15 @@ if progress_count < total:
             "AI Support": row["How AI/GenAI Supports"],
             "Original Human Capability": row["The New Human Capability Statement"],
             "Agree": agree,
-            "Revised Human Capability": revised
+            "Revised Human Capability": revised if agree == "No" else ""
         })
         st.rerun()
 
+    st.markdown("</div>", unsafe_allow_html=True)
+
 else:
-    st.markdown("---")
     st.success("🎉 You’ve completed all tasks — thank you for your insights!")
 
-    # Collect optional contact info
     st.markdown("Before downloading your results, you may provide your contact details (optional):")
     name  = st.text_input("Name (optional)", key="name")
     email = st.text_input("Email (optional)", key="email")
@@ -113,13 +169,11 @@ else:
     st.session_state.user_info["Name"]  = name
     st.session_state.user_info["Email"] = email
 
-    # Build results DataFrame
     result_df = pd.DataFrame(st.session_state.responses)
     if not result_df.empty:
         result_df["Name"]  = st.session_state.user_info["Name"]
         result_df["Email"] = st.session_state.user_info["Email"]
 
-        # Save & offer download
         result_df.to_csv(CSV_OUT, index=False)
         with open(CSV_OUT, "rb") as f:
             st.download_button(
