@@ -4,7 +4,7 @@ import pandas as pd
 from PIL import Image
 
 # Load logo
-logo = Image.open("cgma-chartered-global-management-accountant-seeklogo.svg")
+logo = Image.open("cgma-circle-logo.jpeg")
 st.image(logo, width=150)
 
 # Load the Excel file
