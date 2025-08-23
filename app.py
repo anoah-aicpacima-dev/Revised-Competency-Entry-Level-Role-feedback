@@ -71,4 +71,122 @@ div.stButton > button:first-child {
   color: #fff; border: none;
   padding: .62rem 1.05rem; font-weight: 700; border-radius: 12px;
 }
-div.stButton > button:first-child:hover { fil
+div.stButton > button:first-child:hover { filter: brightness(.96); }
+</style>
+""",
+    unsafe_allow_html=True
+)
+
+# ---------- HEADER ----------
+if Path(LOGO_FILE).exists():
+    st.image(LOGO_FILE, width=180)
+st.title("AI-Accelerated Finance & Accounting Skills — Feedback")
+st.markdown(
+    "Review each AI-supported task and the proposed **Human Capability**. "
+    "Choose **Agree** or **Disagree**; if you disagree, provide a revised statement. "
+    "Download your feedback as a CSV at the end."
+)
+
+# ---------- DATA ----------
+if not Path(EXCEL_FILE).exists():
+    st.error(f"Could not find: **{EXCEL_FILE}**. Upload it next to `app.py` and rerun.")
+    st.stop()
+
+try:
+    df = pd.read_excel(EXCEL_FILE)
+except Exception as e:
+    st.error(f"Failed to read `{EXCEL_FILE}`: {e}")
+    st.stop()
+
+required_cols = ["Skill", "How AI/GenAI Supports", "The New Human Capability Statement"]
+missing = [c for c in required_cols if c not in df.columns]
+if missing:
+    st.error(f"Missing columns: {missing}. Found: {list(df.columns)}")
+    st.stop()
+
+# ---------- STATE ----------
+if "responses" not in st.session_state:
+    st.session_state.responses = []
+if "user_info" not in st.session_state:
+    st.session_state.user_info = {"Name": "", "Email": ""}
+
+# ---------- PROGRESS ----------
+total = len(df)
+done = len(st.session_state.responses)
+st.markdown(f'<div class="progress-text">Progress: Task {min(done+1, total)} of {total}</div>', unsafe_allow_html=True)
+st.progress(0 if total == 0 else done/total)
+
+# ---------- RENDER HELPERS ----------
+def group_html(icon_label: str, body: str, cls: str) -> str:
+    return f"""
+    <div class="group {cls}">
+      <div class="title">{icon_label}</div>
+      <div class="body">{body}</div>
+    </div>
+    """
+
+# ---------- MAIN ----------
+if done < total:
+    row = df.iloc[done]
+    skill_html = group_html("🧾 Skill", row["Skill"], "skill")
+    ai_html    = group_html("🤖 AI/GenAI Supports", row["How AI/GenAI Supports"], "ai")
+    human_html = group_html("👤 Proposed Human Capability", row["The New Human Capability Statement"], "human")
+
+    st.markdown(f"<div class='card'>{skill_html}{ai_html}{human_html}</div>", unsafe_allow_html=True)
+
+    st.markdown(group_html("📝 Review & Submit", "", "review"), unsafe_allow_html=True)
+
+    agree = st.radio(
+        label="Do you agree with the Human Capability Statement?",
+        options=["Yes", "No"],
+        horizontal=True,
+        key=f"agree_{done}"
+    )
+
+    revised = ""
+    if agree == "No":
+        revised = st.text_area(
+            label="If you disagree, suggest your revised statement:",
+            placeholder="Type your improved Human Capability statement…",
+            key=f"revise_{done}"
+        )
+
+    if st.button("✅ Submit Feedback", type="primary"):
+        st.session_state.responses.append({
+            "Skill": row["Skill"],
+            "AI Support": row["How AI/GenAI Supports"],
+            "Original Human Capability": row["The New Human Capability Statement"],
+            "Agree": agree,
+            "Revised Human Capability": revised if agree == "No" else ""
+        })
+        st.rerun()
+
+else:
+    st.success("🎉 You’ve completed all tasks — thank you for your insights!")
+    st.markdown("Provide contact info (optional) before downloading your results:")
+
+    name  = st.text_input("Name (optional)", key="name")
+    email = st.text_input("Email (optional)", key="email")
+    st.session_state.user_info["Name"]  = name
+    st.session_state.user_info["Email"] = email
+
+    result_df = pd.DataFrame(st.session_state.responses)
+    if not result_df.empty:
+        result_df["Name"]  = st.session_state.user_info["Name"]
+        result_df["Email"] = st.session_state.user_info["Email"]
+        result_df.to_csv(CSV_OUT, index=False)
+
+        with open(CSV_OUT, "rb") as f:
+            st.download_button(
+                label="📥 Download Feedback as CSV",
+                data=f,
+                file_name=CSV_OUT,
+                mime="text/csv",
+                type="primary"
+            )
+
+        with st.expander("Preview your CSV data"):
+            st.dataframe(result_df, use_container_width=True)
+    else:
+        st.info("No responses captured. Go back and submit at least one task.")
+
